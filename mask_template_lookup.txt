@@ -1,0 +1,2 @@
+filter,templatefile
+CH4_short + 9holeMsk,mf_g9_ch4s.idlvar
