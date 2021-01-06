@@ -22,3 +22,5 @@ def grab_postage_stamp(image,cropsize,xcentroid,ycentroid):
     #pdb.set_trace()
     return image[ymin:ymax,xmin:xmax]
     
+
+    

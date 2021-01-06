@@ -7,6 +7,8 @@ from scipy.io import readsav
 import pyoifits
 import pandas as pd
 import image_handling
+import mask_functions
+import bispec
 ##data location
 datadir = os.getenv("HOME")+'/data_local/nirc2/ADAM/1204/'
 
@@ -14,6 +16,7 @@ datadir = os.getenv("HOME")+'/data_local/nirc2/ADAM/1204/'
 import numpy as np
 import glob,os,sys
 
+##find an example datafile
 infofile = 'targlistcentroids.txt'
 
 ff = open(infofile,'r')
@@ -36,48 +39,36 @@ tname=np.array(tname)
 tnum=np.array(tnum)
 fprefix=np.array(fprefix)
 
-
+#pdb.set_trace()
 
 ##Select a target, this is a random FFTau image
-targ = np.where(tname == 'FF-Tau')[0]
-qwe= 99578 ##This happens to be n0392.fits
-LDIF = glob.glob(datadir+fprefix[qwe]+'.LDIF.fits')
-hdu = fits.open(LDIF[0])
-target_image = hdu[0].data
-target_header = hdu[0].header
+qwe= 99578-4 ##This happens to be n0388.fits, this first in a set of 8 for FFTau in future this has to be automated
+targetprefix = fprefix[qwe]
 
-'''
-    PLAN
-    0. Read header and determine correct mask template file
-    1. Crop the image
-    2. Read mask template file 
-    3. Calc Bispec
-    4. Save as OIFITS
+
+fftau_index = [x for x in range(qwe,qwe+8)]
+iptau_index = [x for x in range(qwe+8,qwe+8+8)]
+runindex = fftau_index + iptau_index
+reprocess = False
+if reprocess == True:
+    #pdb.set_trace()
+    ##This runs everything bispec related that can be done on a single frame, except compute the closure-phase triple product because 
+    ##That can be done later and is super simple once you have the bispectrum
+    outfiles = []
+    for i,ind in enumerate(runindex):
+        print('Processing Frame ' + str(i+1) + ' of ' + str(len(runindex)))
+        outputfilename = bispec.run_bispec(fprefix[ind],datadir='/Users/acr2877/data_local/nirc2/ADAM',dontsave=False,giveoutput=False)
+        outfiles.append(outputfilename)
     
+    ##following this, we need groupings of target runs to do statistics on the bispectrum/visibility products
+    ##right here we need some code to match outputs from the above to target file names
+    fftau_nrmfiles = outfiles[0:8]
+    iptau_nrmfiles = outfiles[8:]
 
-'''
-
-##MASK SETUP
-mask_setup = target_header['FILTER']
-mflookup = pd.read_csv('mask_template_lookup.txt',delimiter=',').to_records()
-mftemplatefile = 'nrm_mask_templates/nirc2/'+mflookup[np.where(mflookup.filter == mask_setup)[0]].templatefile[0]
-maskinfo = readsav(mftemplatefile)
-
-pdb.set_trace()
-
-
-
-
-##crop out the postage stamp as per qbe_nirc2
-cropsize=256
-cropped_image=image_handling.grab_postage_stamp(target_image,cropsize,xcen[qwe],ycen[qwe])
-
-##This is where calc_bispec really starts 
-
-
-
-
+fftau_nrmfiles = ['/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.33780.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.33807.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.33835.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.33862.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.33890.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.33918.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.33946.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.33973.LDIFNRM.pkl']
+iptau_nrmfiles = ['/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.34094.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.34122.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.34151.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.34179.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.34206.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.34234.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.34261.LDIFNRM.pkl', '/Users/acr2877/data_local/nirc2/ADAM/NRM/2012/1204/N2.20121204.34293.LDIFNRM.pkl']
+dummy = bispec.bispectrum_runstats(fftau_nrmfiles)
 
 
 pdb.set_trace()
-print('Done')
+print("Done")
