@@ -49,7 +49,7 @@ targetprefix = fprefix[qwe]
 fftau_index = [x for x in range(qwe,qwe+8)]
 iptau_index = [x for x in range(qwe+8,qwe+8+8)]
 runindex = fftau_index + iptau_index
-reprocess = False
+reprocess = True
 if reprocess == True:
     #pdb.set_trace()
     ##This runs everything bispec related that can be done on a single frame, except compute the closure-phase triple product because 
